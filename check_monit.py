@@ -131,6 +131,9 @@ def main():
     status = 0
     if count_ok < count_all:
       status = 2
+    
+    if count_ok == 0:
+      status = 2
 
     print_output(status, count_ok, count_all, items)
 
