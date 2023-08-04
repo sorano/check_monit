@@ -24,10 +24,11 @@
 
 import sys
 import argparse
-import requests
 import os
-
 from xml.etree import ElementTree
+
+import requests
+
 
 script_name = os.path.basename(sys.argv[0])
 
@@ -57,9 +58,9 @@ def service_output(service_type, element):
   if service_type == 0:
     block = float(element.findall('block/percent')[0].text)
     inode = float(element.findall('inode/percent')[0].text)
-    return('user={0}%;inodes={1}%'.format(block, inode))
-    
-  elif service_type == 5:
+    return 'user={0}%;inodes={1}%'.format(block, inode)
+
+  if service_type == 5:
     output = []
 
     load1 = float(element.findall('system/load/avg01')[0].text)
@@ -77,12 +78,13 @@ def service_output(service_type, element):
     output.append('memory={0}%'.format(memory))
 
     return ';'.join(output)
-  elif service_type == 7:
+
+  if service_type == 7:
     # status = float(element.findall('program/status')[0].text)
     return element.findall('program/output')[0].text
-    
-  else:
-    return 'Service (type={0}) not implemented'.format(service_type)
+
+  return 'Service (type={0}) not implemented'.format(service_type)
+
 
 def main():
   parser = argparse.ArgumentParser()
@@ -91,12 +93,12 @@ def main():
                     required=True,
                     type=str,
                     help='Monit hostname')
-  
+
   parser.add_argument('-p', '--port', dest='port',
                   default=2812,
                   type=int,
                   help='Port')
-  
+
   parser.add_argument('-U', '--user', dest='user',
                   required=True,
                   type=str,
@@ -106,62 +108,61 @@ def main():
                   required=True,
                   type=str,
                   help='HTTP password')
-  
+
   args = parser.parse_args()
 
   url = 'http://{0}:{1}/_status?format=xml'.format(args.host, args.port)
-  
+
   try:
     r = requests.get(url, auth=(args.user, args.password), timeout=5)
-  except Exception as e:
+  except Exception as e: # pylint: disable=broad-except
     print('{0} UNKNOWN: Socket error={1}'.format(script_name, str(e)))
     return 3
 
   status_code = r.status_code
 
-  if (status_code != 200):
+  if status_code != 200:
     print('{0} UNKNOWN: HTTP status={1}'.format(script_name, status_code))
     return 3
-  else:
-    try:
-      tree = ElementTree.fromstring(r.content)
-    except Exception as e:
-      print('{0} UNKNOWN: XML error={1}'.format(script_name, str(e)))
-      return 3
 
-    items = []
-    services = tree.findall('service');
+  try:
+    tree = ElementTree.fromstring(r.content)
+  except Exception as e: # pylint: disable=broad-except
+    print('{0} UNKNOWN: XML error={1}'.format(script_name, str(e)))
+    return 3
 
-    count_all = 0
-    count_ok = 0
+  items = []
+  services = tree.findall('service')
 
-    for service in services:
-      monitor = int(service.find('monitor').text)
-      if (monitor == 1):
-        status = int(service.find('status').text)
-        if status == 0:
-          count_ok += 1
+  count_all = 0
+  count_ok = 0
 
-        count_all += 1
+  for service in services:
+    monitor = int(service.find('monitor').text)
+    if monitor == 1:
+      status = int(service.find('status').text)
+      if status == 0:
+        count_ok += 1
 
-        items.append({
-          "name": service.find('name').text,
-          "status": status,
-          "output": service_output(int(service.get('type')), service)
-        })
-    
-    status = 0
-    if count_ok < count_all:
-      status = 2
-    
-    if count_ok == 0:
-      status = 2
+      count_all += 1
 
-    print_output(status, count_ok, count_all, items)
+      items.append({
+        "name": service.find('name').text,
+        "status": status,
+        "output": service_output(int(service.get('type')), service)
+      })
 
-    return status
+  status = 0
 
-  return 0
+  if count_ok < count_all:
+    status = 2
+
+  if count_ok == 0:
+    status = 2
+
+  print_output(status, count_ok, count_all, items)
+
+  return status
 
 if __name__ == '__main__':
   sys.exit(main())
