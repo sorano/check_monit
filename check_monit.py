@@ -24,13 +24,14 @@
 
 import sys
 import argparse
-import os
 from xml.etree import ElementTree
 
 import requests
 
 
-script_name = os.path.basename(sys.argv[0])
+__version__ = '0.1.0'
+
+script_name = 'check_monit'
 
 icinga_status = {
     0: 'OK',
@@ -38,6 +39,25 @@ icinga_status = {
     2: 'CRITICAL',
     3: 'UNKNOWN'
 }
+
+def commandline(args):
+
+    parser = argparse.ArgumentParser(prog="check_monit.py")
+    parser.add_argument('-V', '--version', action='version', version=__version__)
+
+    parser.add_argument('-H', '--host', dest='host', required=True, type=str,
+                        help='The Hostname of Monit')
+
+    parser.add_argument('-p', '--port', dest='port', default=2812, type=int,
+                        help='The Port of Monit')
+
+    parser.add_argument('-U', '--user', dest='user', required=True, type=str,
+                        help='HTTP username')
+
+    parser.add_argument('-P', '--pass', dest='password', required=True, type=str,
+                        help='HTTP password')
+
+    return parser.parse_args(args)
 
 def print_output(status, count_ok, count_all, items):
     print('{0} {1}: Services {2}/{3}'.format(
@@ -86,31 +106,7 @@ def service_output(service_type, element):
     return 'Service (type={0}) not implemented'.format(service_type)
 
 
-def main():
-    parser = argparse.ArgumentParser()
-
-    parser.add_argument('-H', '--host', dest='host',
-                        required=True,
-                        type=str,
-                        help='Monit hostname')
-
-    parser.add_argument('-p', '--port', dest='port',
-                        default=2812,
-                        type=int,
-                        help='Port')
-
-    parser.add_argument('-U', '--user', dest='user',
-                        required=True,
-                        type=str,
-                        help='HTTP username')
-
-    parser.add_argument('-P', '--pass', dest='password',
-                        required=True,
-                        type=str,
-                        help='HTTP password')
-
-    args = parser.parse_args()
-
+def main(args):
     url = 'http://{0}:{1}/_status?format=xml'.format(args.host, args.port)
 
     try:
@@ -164,5 +160,11 @@ def main():
 
     return status
 
-if __name__ == '__main__':
-    sys.exit(main())
+if __package__ == '__main__' or __package__ is None: # pragma: no cover
+    try:
+        ARGS = commandline(sys.argv[1:])
+        sys.exit(main(ARGS))
+    except Exception: # pylint: disable=broad-except
+        exception = sys.exc_info()
+        print("[UNKNOWN] Unexpected Python error: %s %s" % (exception[0], exception[1]))
+        sys.exit(3)
