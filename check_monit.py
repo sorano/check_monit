@@ -43,10 +43,10 @@ def commandline(args):
     parser = argparse.ArgumentParser(prog="check_monit.py")
 
     parser.add_argument('-V', '--version', action='version', version=__version__)
-    parser.add_argument('-H', '--host', dest='host', required=True, type=str,
-                        help='The Hostname of Monit')
+    parser.add_argument('-H', '--host', dest='host', default='http://localhost', type=str,
+                        help='Hostname of the Monit instance (default: http://localhost)')
     parser.add_argument('-p', '--port', dest='port', default=2812, type=int,
-                        help='The Port of Monit')
+                        help='Port of the Monit instance')
     parser.add_argument('-U', '--user', dest='user', required=True, type=str,
                         help='HTTP username')
     parser.add_argument('-P', '--pass', dest='password', required=True, type=str,
@@ -98,7 +98,7 @@ def service_output(service_type, element):
 
 
 def main(args):
-    url = 'http://{0}:{1}/_status?format=xml'.format(args.host, args.port)
+    url = '{0}:{1}/_status?format=xml'.format(args.host, args.port)
 
     try:
         r = requests.get(url, auth=(args.user, args.password), timeout=5)
