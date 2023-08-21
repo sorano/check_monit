@@ -38,6 +38,7 @@ icinga_status = {
     3: 'UNKNOWN'
 }
 
+
 def commandline(args):
 
     parser = argparse.ArgumentParser(prog="check_monit.py")
@@ -54,6 +55,7 @@ def commandline(args):
 
     return parser.parse_args(args)
 
+
 def print_output(status, count_ok, count_all, items):
 
     s = icinga_status[status]
@@ -64,6 +66,7 @@ def print_output(status, count_ok, count_all, items):
         for item in items:
             print(' \\_ {0}'.format(item['name']))
             print('  ' + item['output'])
+
 
 def service_output(service_type, element):
     if service_type == 0:
@@ -150,6 +153,7 @@ def main(args):
     print_output(status, count_ok, count_all, items)
 
     return status
+
 
 if __package__ == '__main__' or __package__ is None: # pragma: no cover
     try:
