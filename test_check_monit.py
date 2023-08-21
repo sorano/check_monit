@@ -33,13 +33,11 @@ class UtilTesting(unittest.TestCase):
 
     @mock.patch('builtins.print')
     def test_return_plugin(self, mock_print):
-        actual = print_output(1, 2, 3, [{'name': 'foo', 'output': 'bar'}])
+        actual = print_output(1, 2, 3, [{'name': 'foo', 'output': 'bar', 'status': 1}])
 
-        calls = [mock.call('check_monit WARNING: Services 2/3'),
-                 mock.call(''),
-                 mock.call('### foo'),
-                 mock.call('bar'),
-                 mock.call('')]
+        calls = [mock.call('[WARNING]: Monit Service Status 2/3'),
+                 mock.call(' \\_ [CRITICAL]: foo'),
+                 mock.call('  bar')]
 
         mock_print.assert_has_calls(calls)
 
@@ -56,7 +54,7 @@ class MainTesting(unittest.TestCase):
 
         self.assertEqual(actual, 3)
 
-        calls = [mock.call('check_monit UNKNOWN: Socket error=Boom!')]
+        calls = [mock.call('[UNKNOWN]: Monit Socket error=Boom!')]
 
         mock_print.assert_has_calls(calls)
 
@@ -71,7 +69,7 @@ class MainTesting(unittest.TestCase):
 
         self.assertEqual(actual, 3)
 
-        calls = [mock.call('check_monit UNKNOWN: HTTP status=400')]
+        calls = [mock.call('[UNKNOWN]: Monit HTTP status=400')]
 
         mock_print.assert_has_calls(calls)
 
@@ -86,7 +84,7 @@ class MainTesting(unittest.TestCase):
 
         self.assertEqual(actual, 3)
 
-        calls = [mock.call('check_monit UNKNOWN: XML error=syntax error: line 1, column 0')]
+        calls = [mock.call('[UNKNOWN]: Monit XML error=syntax error: line 1, column 0')]
 
         mock_print.assert_has_calls(calls)
 
@@ -103,11 +101,9 @@ class MainTesting(unittest.TestCase):
 
         self.assertEqual(actual, 0)
 
-        calls = [mock.call('check_monit OK: Services 1/1'),
-                 mock.call(''),
-                 mock.call('### scratch'),
-                 mock.call('load=0.0,0.0,0.0;user=0.1%;system=0.1%;nice=0.0%;hardirq=0.0%;memory=10.6%'),
-                 mock.call('')]
+        calls = [mock.call('[OK]: Monit Service Status 1/1'),
+                 mock.call(' \\_ [OK]: scratch'),
+                 mock.call('  load=0.0,0.0,0.0;user=0.1%;system=0.1%;nice=0.0%;hardirq=0.0%;memory=10.6%')]
 
         mock_print.assert_has_calls(calls)
 
@@ -124,10 +120,8 @@ class MainTesting(unittest.TestCase):
 
         self.assertEqual(actual, 2)
 
-        calls = [mock.call('check_monit CRITICAL: Services 0/1'),
-                 mock.call(''),
-                 mock.call('### scratch'),
-                 mock.call('load=0.0,0.0,0.0;user=0.1%;system=0.1%;nice=0.0%;hardirq=0.0%;memory=10.6%'),
-                 mock.call('')]
+        calls = [mock.call('[CRITICAL]: Monit Service Status 0/1'),
+                 mock.call(' \\_ [CRITICAL]: scratch'),
+                 mock.call('  load=0.0,0.0,0.0;user=0.1%;system=0.1%;nice=0.0%;hardirq=0.0%;memory=10.6%')]
 
         mock_print.assert_has_calls(calls)
