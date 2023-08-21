@@ -18,11 +18,11 @@ Alternatively you can install with pip:
 check_monit.py -H hostname -p 8080 -U user -P password
 
 [OK] Monit Services 3/3
- \_ xxxx.netways.de
+ \_ [OK] xxxx.netways.de
   load=0.33,0.29,0.26;user=0.8%;system=0.7%;nice=0.0%;hardirq=0.2%;memory=8.3%
- \_ RootFs
+ \_ [OK] RootFs
   user=1.1%;inodes=0.3%
- \_ gmirror-status
+ \_ [OK] gmirror-status
   Name    Status  Components
   mirror/OPNsense  COMPLETE  ada0 (ACTIVE)
                              ada1 (ACTIVE)

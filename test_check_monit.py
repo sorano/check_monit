@@ -33,10 +33,10 @@ class UtilTesting(unittest.TestCase):
 
     @mock.patch('builtins.print')
     def test_return_plugin(self, mock_print):
-        actual = print_output(1, 2, 3, [{'name': 'foo', 'output': 'bar'}])
+        actual = print_output(1, 2, 3, [{'name': 'foo', 'output': 'bar', 'status': 1}])
 
         calls = [mock.call('[WARNING]: Monit Service Status 2/3'),
-                 mock.call(' \\_ foo'),
+                 mock.call(' \\_ [CRITICAL]: foo'),
                  mock.call('  bar')]
 
         mock_print.assert_has_calls(calls)
@@ -102,7 +102,7 @@ class MainTesting(unittest.TestCase):
         self.assertEqual(actual, 0)
 
         calls = [mock.call('[OK]: Monit Service Status 1/1'),
-                 mock.call(' \\_ scratch'),
+                 mock.call(' \\_ [OK]: scratch'),
                  mock.call('  load=0.0,0.0,0.0;user=0.1%;system=0.1%;nice=0.0%;hardirq=0.0%;memory=10.6%')]
 
         mock_print.assert_has_calls(calls)
@@ -121,7 +121,7 @@ class MainTesting(unittest.TestCase):
         self.assertEqual(actual, 2)
 
         calls = [mock.call('[CRITICAL]: Monit Service Status 0/1'),
-                 mock.call(' \\_ scratch'),
+                 mock.call(' \\_ [CRITICAL]: scratch'),
                  mock.call('  load=0.0,0.0,0.0;user=0.1%;system=0.1%;nice=0.0%;hardirq=0.0%;memory=10.6%')]
 
         mock_print.assert_has_calls(calls)
