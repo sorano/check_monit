@@ -31,8 +31,6 @@ import requests
 
 __version__ = '0.1.0'
 
-script_name = 'check_monit'
-
 icinga_status = {
     0: 'OK',
     1: 'WARNING',
@@ -43,36 +41,29 @@ icinga_status = {
 def commandline(args):
 
     parser = argparse.ArgumentParser(prog="check_monit.py")
-    parser.add_argument('-V', '--version', action='version', version=__version__)
 
+    parser.add_argument('-V', '--version', action='version', version=__version__)
     parser.add_argument('-H', '--host', dest='host', required=True, type=str,
                         help='The Hostname of Monit')
-
     parser.add_argument('-p', '--port', dest='port', default=2812, type=int,
                         help='The Port of Monit')
-
     parser.add_argument('-U', '--user', dest='user', required=True, type=str,
                         help='HTTP username')
-
     parser.add_argument('-P', '--pass', dest='password', required=True, type=str,
                         help='HTTP password')
 
     return parser.parse_args(args)
 
 def print_output(status, count_ok, count_all, items):
-    print('{0} {1}: Services {2}/{3}'.format(
-      script_name,
-      icinga_status[status],
-      count_ok,
-      count_all
-    ))
+
+    s = icinga_status[status]
+
+    print(f"[{s}]: Monit Service Status {count_ok}/{count_all}")
 
     if len(items):
-        print("")
         for item in items:
-            print('### {0}'.format(item['name']))
-            print(item['output'])
-            print("")
+            print(' \\_ {0}'.format(item['name']))
+            print('  ' + item['output'])
 
 def service_output(service_type, element):
     if service_type == 0:
@@ -112,19 +103,19 @@ def main(args):
     try:
         r = requests.get(url, auth=(args.user, args.password), timeout=5)
     except Exception as e: # pylint: disable=broad-except
-        print('{0} UNKNOWN: Socket error={1}'.format(script_name, str(e)))
+        print('[UNKNOWN]: Monit Socket error={0}'.format(str(e)))
         return 3
 
     status_code = r.status_code
 
     if status_code != 200:
-        print('{0} UNKNOWN: HTTP status={1}'.format(script_name, status_code))
+        print('[UNKNOWN]: Monit HTTP status={0}'.format(status_code))
         return 3
 
     try:
         tree = ElementTree.fromstring(r.content)
     except Exception as e: # pylint: disable=broad-except
-        print('{0} UNKNOWN: XML error={1}'.format(script_name, str(e)))
+        print('[UNKNOWN]: Monit XML error={0}'.format(str(e)))
         return 3
 
     items = []
