@@ -25,9 +25,7 @@
 import sys
 import argparse
 from xml.etree import ElementTree
-
 import requests
-
 
 __version__ = '0.1.0'
 
@@ -38,11 +36,8 @@ icinga_status = {
     3: 'UNKNOWN'
 }
 
-
 def commandline(args):
-
     parser = argparse.ArgumentParser(prog="check_monit.py")
-
     parser.add_argument('-V', '--version', action='version', version=__version__)
     parser.add_argument('-H', '--host', dest='host', default='http://localhost', type=str,
                         help='Hostname of the Monit instance (default: http://localhost)')
@@ -52,28 +47,23 @@ def commandline(args):
                         help='HTTP username')
     parser.add_argument('-P', '--pass', dest='password', required=True, type=str,
                         help='HTTP password')
-
     return parser.parse_args(args)
 
-
 def print_output(status, count_ok, count_all, items):
-
     s = icinga_status[status]
-
     print(f"[{s}]: Monit Service Status {count_ok}/{count_all}")
-
+    
     if len(items):
         for item in items:
             s = "OK" if item['status'] == 0 else "CRITICAL"
-            print(' \\_ [{0}]: {1}'.format(s, item['name']))
-            print('  ' + item['output'])
-
+            print(f' \\_ [{s}]: {item["name"]}')
+            print(f'  {item["output"]}')
 
 def service_output(service_type, element):
     if service_type == 0:
         block = float(element.findall('block/percent')[0].text)
         inode = float(element.findall('inode/percent')[0].text)
-        return 'user={0}%;inodes={1}%'.format(block, inode)
+        return f'user={block}%;inodes={inode}%'
 
     if service_type == 5:
         output = []
@@ -81,45 +71,43 @@ def service_output(service_type, element):
         load1 = float(element.findall('system/load/avg01')[0].text)
         load5 = float(element.findall('system/load/avg05')[0].text)
         load15 = float(element.findall('system/load/avg15')[0].text)
-        output.append('load={0},{1},{2}'.format(load1, load5, load15))
+        output.append(f'load={load1},{load5},{load15}')
 
         user = float(element.findall('system/cpu/user')[0].text)
         system = float(element.findall('system/cpu/system')[0].text)
         nice = float(element.findall('system/cpu/nice')[0].text)
         hardirq = float(element.findall('system/cpu/hardirq')[0].text)
-        output.append('user={0}%;system={1}%;nice={2}%;hardirq={3}%'.format(user, system, nice, hardirq))
+        output.append(f'user={user}%;system={system}%;nice={nice}%;hardirq={hardirq}%')
 
         memory = float(element.findall('system/memory/percent')[0].text)
-        output.append('memory={0}%'.format(memory))
+        output.append(f'memory={memory}%')
 
         return ';'.join(output)
 
     if service_type == 7:
-        # status = float(element.findall('program/status')[0].text)
         return element.findall('program/output')[0].text
 
-    return 'Service (type={0}) not implemented'.format(service_type)
-
+    return f'Service (type={service_type}) not implemented'
 
 def main(args):
-    url = '{0}:{1}/_status?format=xml'.format(args.host, args.port)
+    url = f'{args.host}:{args.port}/_status?format=xml'
 
     try:
         r = requests.get(url, auth=(args.user, args.password), timeout=5)
-    except Exception as e: # pylint: disable=broad-except
-        print('[UNKNOWN]: Monit Socket error={0}'.format(str(e)))
+    except Exception as e:
+        print(f'[UNKNOWN]: Monit Socket error={str(e) if e else "Unknown error"}')
         return 3
 
     status_code = r.status_code
 
     if status_code != 200:
-        print('[UNKNOWN]: Monit HTTP status={0}'.format(status_code))
+        print(f'[UNKNOWN]: Monit HTTP status={status_code}')
         return 3
 
     try:
         tree = ElementTree.fromstring(r.content)
-    except Exception as e: # pylint: disable=broad-except
-        print('[UNKNOWN]: Monit XML error={0}'.format(str(e)))
+    except Exception as e:
+        print(f'[UNKNOWN]: Monit XML error={str(e) if e else "Unknown error"}')
         return 3
 
     items = []
@@ -155,12 +143,11 @@ def main(args):
 
     return status
 
-
-if __package__ == '__main__' or __package__ is None: # pragma: no cover
+if __package__ == '__main__' or __package__ is None:
     try:
         ARGS = commandline(sys.argv[1:])
         sys.exit(main(ARGS))
-    except Exception: # pylint: disable=broad-except
+    except Exception:
         exception = sys.exc_info()
-        print("[UNKNOWN] Unexpected Python error: %s %s" % (exception[0], exception[1]))
+        print(f"[UNKNOWN] Unexpected Python error: {exception[0]} {exception[1]}")
         sys.exit(3)
